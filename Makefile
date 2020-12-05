@@ -55,7 +55,12 @@ endif
 # Our default target
 PHONY := _all
 _all:
-
+# #region xx
+#===============================================================================================
+#
+# 不用这块代码，它是换输出目录用的
+#
+#===============================================================================================
 # KBUILD_SRC is set on invocation of make in OBJ directory
 # KBUILD_SRC is not intended to be used by the regular user (for now)
 ifeq ($(KBUILD_SRC),)
@@ -96,7 +101,13 @@ sub-make: FORCE
 skip-makefile := 1
 endif # ifneq ($(KBUILD_OUTPUT),)
 endif # ifeq ($(KBUILD_SRC),)
+# #endregion
 
+#===============================================================================================
+#
+# 不用管上面的，上面的会生成一些变量然后重新运行Makefile。上面的存在是为了在另一个目录中输出项目
+#
+#===============================================================================================
 # We process the rest of the Makefile if this is the final invocation of make
 ifeq ($(skip-makefile),)
 
@@ -105,6 +116,7 @@ ifeq ($(skip-makefile),)
 PHONY += all
 _all: all
 
+# srctree 和 objtree 都是当前目录
 srctree		:= $(if $(KBUILD_SRC),$(KBUILD_SRC),$(CURDIR))
 objtree		:= $(CURDIR)
 src		:= $(srctree)
@@ -119,6 +131,7 @@ CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 KCONFIG_CONFIG	?= .config
 export KCONFIG_CONFIG
 
+# 找到使用哪个 shell。每个主机有区别的有的是sh 有的是 bash
 # SHELL used by kbuild
 CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
@@ -131,6 +144,9 @@ HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 \
 HOSTCXXFLAGS = -O2
 
 KBUILD_DEFCONFIG = defconfig
+
+#----------------------------------------------------------------------------
+# 控制是否打开命令行输出
 # Beautify output
 # ---------------------------------------------------------------------------
 #
@@ -153,7 +169,6 @@ KBUILD_DEFCONFIG = defconfig
 #
 # If KBUILD_VERBOSE equals 0 then the above command will be hidden.
 # If KBUILD_VERBOSE equals 1 then the above command is displayed.
-
 ifeq ($(KBUILD_VERBOSE),1)
   quiet =
   Q =
@@ -161,25 +176,27 @@ else
   quiet=quiet_
   Q = @
 endif
-
 # If the user is running make -s (silent mode), suppress echoing of
 # commands
-
 ifneq ($(findstring s,$(MAKEFLAGS)),)
   quiet=silent_
 endif
 
 export quiet Q KBUILD_VERBOSE
 
+#----------------------------------------------------------------------------
+# 这个变量会自动传输到下级的 Makefile
 # Look for make include files relative to root of kernel src
 MAKEFLAGS += --include-dir=$(srctree)
 
 # We need some generic definitions (do not try to remake the file).
-$(srctree)/scripts/Kbuild.include: ;
+$(srctree)/scripts/Kbuild.include: ; # 这个空目标是什么呢？
+
+#----------------------------------------------------------------------------
+# 引入工具函数，例如 选参数的、给路径加前缀的等等
 include $(srctree)/scripts/Kbuild.include
 
 # Make variables (CC, etc...)
-
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
 CC		= $(CROSS_COMPILE)gcc
@@ -232,9 +249,10 @@ export KBUILD_AFLAGS_KERNEL KBUILD_CFLAGS_KERNEL
 export KBUILD_ARFLAGS
 
 # Files to ignore in find ... statements
-
 RCS_FIND_IGNORE := \( -name SCCS -o -name BitKeeper -o -name .svn -o -name CVS -o -name .pc -o -name .hg -o -name .git \) -prune -o
 
+#----------------------------------------------------------------------------
+# 共享的规则
 # ===========================================================================
 # Rules shared between *config targets and build targets
 
@@ -265,7 +283,6 @@ endif
 # For example 'make oldconfig all'.
 # Detect when mixed targets is specified, and make a second invocation
 # of make so .config is not included in this case either (for *config).
-
 no-dot-config-targets := clean mrproper distclean \
 			 cscope gtags TAGS tags help %docs check% coccicheck \
 			 include/linux/version.h headers_% \
@@ -292,10 +309,8 @@ ifeq ($(mixed-targets),1)
 # ===========================================================================
 # We're called with mixed targets (*config and build targets).
 # Handle them one by one.
-
 %:: FORCE
 	$(Q)$(MAKE) -C $(srctree) KBUILD_SRC= $@
-
 else
 ifeq ($(config-targets),1)
 # ===========================================================================
@@ -307,24 +322,17 @@ ifeq ($(config-targets),1)
 # used for 'make defconfig'
 #include $(srctree)/arch/$(SRCARCH)/Makefile
 export KBUILD_DEFCONFIG KBUILD_KCONFIG
-
 config: scripts_basic outputmakefile FORCE
 	$(warning "First time to out")
 	$(Q)mkdir -p include/linux include/config
 	$(Q)$(MAKE) $(build)=scripts/kconfig $@
-
 %config: scripts_basic outputmakefile FORCE
 	$(Q)mkdir -p include/linux include/config
 	$(Q)$(MAKE) $(build)=scripts/kconfig $@
-
 else
-
-
 ifeq ($(dot-config),1)
 # Read in config
 -include include/config/auto.conf
-
-
 # Read in dependencies to all Kconfig* files, make sure to run
 # oldconfig if changes are detected.
 -include include/config/auto.conf.cmd
@@ -338,12 +346,11 @@ $(KCONFIG_CONFIG) include/config/auto.conf.cmd: ;
 # we execute the config step to be sure to catch updated Kconfig files
 include/config/%.conf: $(KCONFIG_CONFIG) include/config/auto.conf.cmd
 	$(Q)$(MAKE) -f $(srctree)/Makefile silentoldconfig
-
-
 else
 # Dummy target needed, because used as prerequisite
 include/config/auto.conf: ;
 endif # $(dot-config)
+
 -include include/config/auto.conf
 
 TARGET_OUT := output dl
