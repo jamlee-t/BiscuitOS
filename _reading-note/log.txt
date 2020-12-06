@@ -1,0 +1,71 @@
+>>>>>>>>>>>>>> it is dot-config
+>>>>>>>>>>>>>> dot-config 下第一次运行是重新运行 make，参数是 silentoldconfig
+make -f /home/vagrant/BiscuitOS-JAM/Makefile silentoldconfig
+
+
+#---- 又是一次进入 make
+>>>>>>>>>>>>>> it is config-targets
+make -f scripts/Makefile.build obj=scripts/basic
+>>>>>>>>>>>>>> 生成 .config 文件的入口
+mkdir -p include/linux include/config
+make -f scripts/Makefile.build obj=scripts/kconfig silentoldconfig
+mkdir -p include/generated
+scripts/kconfig/conf --silentoldconfig Kconfig
+>>>>>>>>>>>>>> 生成 .config 文件完毕
+>>>>>>>>>>>>>> it is dot-config
+/bin/bash /home/vagrant/BiscuitOS-JAM/scripts/package/binutils.sh /home/vagrant/BiscuitOS-JAMX binutilsX 1X "0.12.1"X https://raw.githubusercontent.com/BiscuitOS/PackageManage/master/gnu-binutilsX "linux-0.12"X 
+/bin/bash /home/vagrant/BiscuitOS-JAM/scripts/package/gnu-gcc.sh /home/vagrant/BiscuitOS-JAMX gccX 1.4X "0.12.1"X https://raw.githubusercontent.com/BiscuitOS/PackageManage/master/gnu-binutilsX "linux-0.12"X
+/bin/bash /home/vagrant/BiscuitOS-JAM/scripts/board/dts.sh /home/vagrant/BiscuitOS-JAM "GoingMerry_linux_0.12.dts"X "0.12.1"X "linux-0.12"X DTSX
+/bin/bash /home/vagrant/BiscuitOS-JAM/scripts/linux/linux.sh /home/vagrant/BiscuitOS-JAMX linuxX "0.12.1"X X "https://github.com/BiscuitOS/Kernel.git"X /home/vagrant/BiscuitOS-JAM/kernel/linux/patchX 5.0 1X "linux-0.12"X "tar.gz"X "1"X X X "Legacy"X /home/vagrant/BiscuitOS-JAM/kernel/linux/X "1"X
+/bin/bash /home/vagrant/BiscuitOS-JAM/scripts/fs/mkimage.sh /home/vagrant/BiscuitOS-JAM minixX V1X "0.12.1"X "linux-0.12"X X
+Setting up swapspace version 1, size = 20 MiB (20967424 bytes)
+无标签， UUID=4c9feac6-fcd2-4092-8cc3-becdcd37efaa
+13664 inodes
+40960 blocks
+Firstdatazone=436 (436)
+Zonesize=1024
+Maxsize=268966912
+
+
+Welcome to fdisk (util-linux 2.27.1).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+Device does not contain a recognized partition table.
+Created a new DOS disklabel with disk identifier 0x6731eec4.
+
+命令(输入 m 获取帮助)： Partition type
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended (container for logical partitions)
+Select (default p): 分区号 (1-4, default 1): First sector (2048-159759, default 2048): Last sector, +sectors or +size{K,M,G,T,P} (36876-159759, default 159759): 
+Created a new partition 1 of type 'Linux' and of size 40 MiB.
+
+命令(输入 m 获取帮助)： Partition type
+   p   primary (1 primary, 0 extended, 3 free)
+   e   extended (container for logical partitions)
+Select (default p): 分区号 (2-4, default 2): First sector (2048-159759, default 2048): Last sector, +sectors or +size{K,M,G,T,P} (118800-159759, default 159759): 
+Created a new partition 2 of type 'Linux' and of size 20 MiB.
+
+命令(输入 m 获取帮助)： 分区号 (1,2, default 2): Partition type (type L to list all types): 
+Changed type of partition 'Linux' to 'Minix / old Linux'.
+
+命令(输入 m 获取帮助)： 分区号 (1,2, default 2): Partition type (type L to list all types): 
+Changed type of partition 'Linux' to 'Linux swap / Solaris'.
+
+命令(输入 m 获取帮助)： Disk /home/vagrant/BiscuitOS-JAM/output/linux-0.12/rootfs/BiscuitOS-minix_V1-0.12.1.img: 78 MiB, 81797120 bytes, 159760 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x6731eec4
+
+设备                                                                                启动  Start 末尾 扇区 Size Id 类型
+/home/vagrant/BiscuitOS-JAM/output/linux-0.12/rootfs/BiscuitOS-minix_V1-0.12.1.img1       36876 118795 81920  40M 81 Minix /
+/home/vagrant/BiscuitOS-JAM/output/linux-0.12/rootfs/BiscuitOS-minix_V1-0.12.1.img2      118800 159759 40960  20M 82 Linux  
+
+命令(输入 m 获取帮助)： The partition table has been altered.
+Syncing disks.
+
+mount: unknown filesystem type 'minix'
+/home/vagrant/BiscuitOS-JAM/fs/minix/Makefile:23: recipe for target '/home/vagrant/BiscuitOS-JAM/fs/minix/build' failed
+make: *** [/home/vagrant/BiscuitOS-JAM/fs/minix/build] Error 32
