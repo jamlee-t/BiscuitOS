@@ -1,6 +1,6 @@
 #/bin/bash
 
-set -e
+set -ex
 # Establish linux source code.
 #
 # (C) 2019.01.15 BiscuitOS <buddy.zhang@aliyun.com>

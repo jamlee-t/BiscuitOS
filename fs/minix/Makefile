@@ -12,6 +12,8 @@ MINIX_OUT        := $(srctree)/output/fs/minix
 MINIX_SCRIPTS    := $(srctree)/scripts/fs/mkimage.sh
 MINIX_TAR        := tar.bz2
 MINIX_PACKAGE    := $(MINIX_NAME)-$(MINIX_SUBNAME)-$(MINIX_VERSION).img
+
+# 修改了顶级的 SUBTARGET 了
 SUB_TARGET       += $(MINIX_DIR)/build
 
 run_minix_sh = $(CONFIG_SHELL) $(MINIX_SCRIPTS) \

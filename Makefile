@@ -55,7 +55,7 @@ endif
 # Our default target
 PHONY := _all
 _all:
-# #region xx
+
 #===============================================================================================
 #
 # 不用这块代码，它是换输出目录用的
@@ -101,7 +101,7 @@ sub-make: FORCE
 skip-makefile := 1
 endif # ifneq ($(KBUILD_OUTPUT),)
 endif # ifeq ($(KBUILD_SRC),)
-# #endregion
+
 
 #===============================================================================================
 #
@@ -253,7 +253,6 @@ RCS_FIND_IGNORE := \( -name SCCS -o -name BitKeeper -o -name .svn -o -name CVS -
 
 #----------------------------------------------------------------------------
 # 共享的规则
-# ===========================================================================
 # Rules shared between *config targets and build targets
 
 # Basic helpers built in scripts/
@@ -288,6 +287,7 @@ no-dot-config-targets := clean mrproper distclean \
 			 include/linux/version.h headers_% \
 			 kernelversion %src-pkg
 
+# NOTE(JamLee): 默认是哪一种 targets 呢？
 config-targets := 0
 mixed-targets  := 0
 dot-config     := 1
@@ -298,13 +298,18 @@ ifneq ($(filter $(no-dot-config-targets), $(MAKECMDGOALS)),)
 	endif
 endif
 
+# NOTE(JamLee): 如何目标一个符合config规则不等于空。filter 过滤符合的 MAKECMDGOALS （也就是make的目标文件，命令行传入的）
 ifneq ($(filter config %config,$(MAKECMDGOALS)),)
+$(info >>>>>>>>>>>>>> it is config-targets)
         config-targets := 1
+		# NOTE(JamLee): 与 filter 相反。 如果不符合规的不等于空是 mixed-targets
         ifneq ($(filter-out config %config,$(MAKECMDGOALS)),)
+$(info >>>>>>>>>>>>>> it is mixed-targets)
                 mixed-targets := 1
         endif
 endif
 
+# NOTE(JamLee): 先看是不是所谓的 mixed-targets
 ifeq ($(mixed-targets),1)
 # ===========================================================================
 # We're called with mixed targets (*config and build targets).
@@ -312,6 +317,7 @@ ifeq ($(mixed-targets),1)
 %:: FORCE
 	$(Q)$(MAKE) -C $(srctree) KBUILD_SRC= $@
 else
+# NOTE(JamLee): 如果是要生成配置则执行。否则就是 dot-config 了
 ifeq ($(config-targets),1)
 # ===========================================================================
 # *config targets only - make sure prerequisites are updated, and descend
@@ -326,13 +332,24 @@ config: scripts_basic outputmakefile FORCE
 	$(warning "First time to out")
 	$(Q)mkdir -p include/linux include/config
 	$(Q)$(MAKE) $(build)=scripts/kconfig $@
+
+# NOTE(JamLee): 这里是入口，用于生成配置文件
 %config: scripts_basic outputmakefile FORCE
+	@echo ">>>>>>>>>>>>>> 生成 .config 文件的入口"
 	$(Q)mkdir -p include/linux include/config
 	$(Q)$(MAKE) $(build)=scripts/kconfig $@
+	@echo ">>>>>>>>>>>>>> 生成 .config 文件完毕"
+
+# NOTE(JamLee): config-target 的 else。也就是说是在 dot-config。这是最后的选择，也就是make不带参数: make V=1 时的操作
 else
+
 ifeq ($(dot-config),1)
+$(info >>>>>>>>>>>>>> 是 dot-config)
+
 # Read in config
 -include include/config/auto.conf
+
+# NOTE(JamLee): 触发下面的 include 任务。 include/config/auto.conf.cmd 不是伪目标所以会触发
 # Read in dependencies to all Kconfig* files, make sure to run
 # oldconfig if changes are detected.
 -include include/config/auto.conf.cmd
@@ -340,18 +357,29 @@ ifeq ($(dot-config),1)
 # To avoid any implicit rule to kick in, define an empty command
 $(KCONFIG_CONFIG) include/config/auto.conf.cmd: ;
 
+# NOTE(JamLee): 在 include 期间会执行的 target。所以我猜测当前文件的 target 会先扫描一次再执行变量和include文件的读取。
 # If .config is newer than include/config/auto.conf, someone tinkered
 # with it and forgot to run make oldconfig.
 # if auto.conf.cmd is missing then we are probably in a cleaned tree so
 # we execute the config step to be sure to catch updated Kconfig files
 include/config/%.conf: $(KCONFIG_CONFIG) include/config/auto.conf.cmd
+	@echo ">>>>>>>>>>>>>> dot-config 下第一次运行是重新运行 make，参数是 silentoldconfig。被include触发的。"
 	$(Q)$(MAKE) -f $(srctree)/Makefile silentoldconfig
 else
+$(info >>>>>>>>>>>>>> 既不是config-target，mixed-target 也不是 dot-config 的情况， 这里应该不会被运行)
 # Dummy target needed, because used as prerequisite
 include/config/auto.conf: ;
 endif # $(dot-config)
 
+$(info )
+$(info )
+$(info )
+$(info >>>>>>>>>>>>>> 不是 config-target 的情况， 这里继续运行)
+
+# NOTE(JamLee): 这里引入的是 kconf 生成 config 配置。父可以读取子文件里的变量。但是子不可以读取父里面的变量，除非父 export 变量了
 -include include/config/auto.conf
+$(info 配置读取测试: $(CONFIG_LINUX_KERNEL_GITHUB_SITE))
+$(info )
 
 TARGET_OUT := output dl
 
@@ -363,50 +391,69 @@ export SUB_TARGET  :=
 export STAGING_DIR := $(srctree)/output
 TARGET_BUILD_DIR   := $(call pre_output)
 
+$(info 因为引入了 auto.conf, 根据 auto.conf 的内容， include 下面不同 Makefile, Makefile里的还会根据 auto.conf 的变量再引入)
 ifdef CONFIG_TOOLCHAIN
 # Toolchain and prebuild
+$(info 引入 toolchain/Makefile)
 include toolchain/Makefile
 endif
 
 ifdef CONFIG_COMMON_UTILISE
 # package
+$(info 引入 package/Makefile)
 include package/Makefile
 endif
 
 ifdef CONFIG_BOOTLOADER
 # Bootloader
+$(info 引入 boot/Makefile)
 include boot/Makefile
 endif
 
 ifdef CONFIG_SUPPORT_BOARD_INDV
-# Board 
+# Board
+$(info 引入 board/Makefile)
 include board/Makefile
 endif
 
 ifdef CONFIG_LINUX_KERNEL
 # kernel
+$(info 引入 kernel/linux/Makefile)
 include kernel/linux/Makefile
 endif
 
 ifdef CONFIG_XV6
 # VX6
+$(info 引入 kernel/xv6/Makefile)
 include kernel/xv6/Makefile
 endif
 
 ifdef CONFIG_APOLLO
 # Apollo
+$(info 引入 kernel/Apollo/Makefile)
 include kernel/Apollo/Makefile
 endif
 
 ifdef CONFIG_PK_HISTORY
 # Kernel History
+$(info 引入 package/history/Makefile)
 include package/history/Makefile
 endif
 
 ifdef CONFIG_ROOTFS
 # Filesystem (must be last invoked)
+$(info 引入 fs/Makefile)
 include fs/Makefile
 endif
+
+$(info )
+$(info )
+$(info )
+$(info )
+
+$(info 引入的文件会修改 SUB_TARGET)
+$(info SUB_TARGET: $(SUB_TARGET))
+$(info )
 
 # The all: target is the default when no target is given on the
 # command line.
@@ -518,9 +565,8 @@ help:
 	@echo  ''
 	@echo  'Execute "make" or "make all" to build all targets marked with [*] '
 	@echo  'For further info see the ./README file'
-
-
 endif #ifeq ($(config-targets),1)
+
 endif #ifeq ($(mixed-targets),1)
 
 endif	# skip-makefile
